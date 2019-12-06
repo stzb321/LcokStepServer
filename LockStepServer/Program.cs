@@ -1,6 +1,7 @@
 ﻿#define USING_TCP_SOCKET
 
 using System;
+using System.Threading;
 
 namespace LockStepServer
 {
@@ -12,9 +13,20 @@ namespace LockStepServer
 #if USING_TCP_SOCKET
             NetworkProxy socket = new TcpSocket();
 #else
-            SocketProxy socket = new UdpSocket();
+            NetworkProxy socket = new UdpSocket();
 #endif
-            socket.StartSocket();
+            try
+            {
+                socket.StartSocket();
+                while (true)
+                {
+                    Thread.Sleep(3);
+                    socket.Update();
+                }
+            }catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 }

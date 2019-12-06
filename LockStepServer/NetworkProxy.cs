@@ -13,6 +13,11 @@ namespace LockStepServer
 
         abstract public void SendTo(string id, string data);
 
+        public void Update()
+        {
+            
+        }
+
         public Action<string, string> HandlerReceiveMessage = (id, recByte) =>
         {
             Console.WriteLine("ReceiveMessage:{0}", recByte);
