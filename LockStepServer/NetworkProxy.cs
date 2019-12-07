@@ -25,7 +25,7 @@ namespace LockStepServer
 
         public string GenId(IPEndPoint endPoint)
         {
-            return string.Format("{0}{1}", endPoint.Address, endPoint.Port);
+            return string.Format("{0}:{1}", endPoint.Address, endPoint.Port);
         }
 
     }
