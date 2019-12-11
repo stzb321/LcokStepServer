@@ -39,30 +39,36 @@ namespace LockStepServer
 
         private void StartListening()
         {
-            listener.BeginAcceptTcpClient(async asyncResult =>
+            try
             {
-                StartListening();
-
-                TcpClient client = listener.EndAcceptTcpClient(asyncResult);
-                IPEndPoint endPoint = (IPEndPoint)client.Client.RemoteEndPoint;
-                string id = GenId(endPoint);
-                Connections.Add(id, client);
-                HandlerClientConnected?.Invoke(client);
-
-                NetworkStream stream = client.GetStream();
-                int length = 1024 * 1024 * 4;
-
-                while (true)
+                listener.BeginAcceptTcpClient(async asyncResult =>
                 {
-                    byte[] buff = new byte[length];
-                    int recLength = await stream.ReadAsync(buff, 0, length);
-                    byte[] recByte = new byte[recLength];
-                    Array.Copy(buff, recByte, recLength);
+                    StartListening();
 
-                    HandlerReceiveMessage?.Invoke(id, Encoding.UTF8.GetString(recByte));
-                }
+                    TcpClient client = listener.EndAcceptTcpClient(asyncResult);
+                    IPEndPoint endPoint = (IPEndPoint)client.Client.RemoteEndPoint;
+                    string id = GenId(endPoint);
+                    Connections.Add(id, client);
+                    HandlerClientConnected?.Invoke(client);
 
-            }, listener);
+                    NetworkStream stream = client.GetStream();
+                    int length = 1024 * 1024 * 4;
+
+                    while (true)
+                    {
+                        byte[] buff = new byte[length];
+                        int recLength = await stream.ReadAsync(buff, 0, length);
+                        byte[] recByte = new byte[recLength];
+                        Array.Copy(buff, recByte, recLength);
+
+                        HandlerReceiveMessage?.Invoke(id, Encoding.UTF8.GetString(recByte));
+                    }
+
+                }, listener);
+            }catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public override void SendTo(string id, string data)

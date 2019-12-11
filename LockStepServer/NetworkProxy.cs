@@ -8,6 +8,7 @@ namespace LockStepServer
     abstract class NetworkProxy
     {
         public static int Port = 8488;
+        public static float HeartBreathTimeOut = 3.0f;
         abstract public void StartSocket();
         abstract public void StopSocket();
 
@@ -21,6 +22,11 @@ namespace LockStepServer
         public Action<string, string> HandlerReceiveMessage = (id, recByte) =>
         {
             Console.WriteLine("ReceiveMessage:{0}", recByte);
+        };
+
+        public Action<string> HandlerTimeOut = (id) =>
+        {
+            Console.WriteLine("On client time out:{0}", id);
         };
 
         public string GenId(IPEndPoint endPoint)
