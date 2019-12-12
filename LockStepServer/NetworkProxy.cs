@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using LockStepFrameWork.NetMsg;
 
 namespace LockStepServer
 {
@@ -12,14 +13,14 @@ namespace LockStepServer
         abstract public void StartSocket();
         abstract public void StopSocket();
 
-        abstract public void SendTo(string id, string data);
+        abstract public void SendTo(string id, MsgType opcode, string data);
 
         public void Update()
         {
             
         }
 
-        public Action<string, string> HandlerReceiveMessage = (id, recByte) =>
+        public Action<string, MsgType, string> HandlerReceiveMessage = (id, opcode, recByte) =>
         {
             Console.WriteLine("ReceiveMessage:{0}", recByte);
         };

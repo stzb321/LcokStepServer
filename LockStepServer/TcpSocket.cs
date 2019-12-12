@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LockStepFrameWork.NetMsg;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -13,13 +14,13 @@ namespace LockStepServer
         public Dictionary<string, TcpClient> Connections = new Dictionary<string, TcpClient>();
 
         
-        public Action<TcpClient> HandlerClientConnected = (socket) =>
+        public Action<string, TcpClient> HandlerClientConnected = (id, socket) =>
         {
-            Console.WriteLine("client connect...");
+            Console.WriteLine(string.Format("client {0} connect...", id));
         };
-        public Action<TcpClient> HandlerClientDisConnected = (socket) =>
+        public Action<string, TcpClient> HandlerClientDisConnected = (id, socket) =>
         {
-            Console.WriteLine("client disconnect...");
+            Console.WriteLine(string.Format("client {0} disconnect...", id));
         };
         private bool IsSocketConnected(TcpClient client)
         {
@@ -49,7 +50,15 @@ namespace LockStepServer
                     IPEndPoint endPoint = (IPEndPoint)client.Client.RemoteEndPoint;
                     string id = GenId(endPoint);
                     Connections.Add(id, client);
-                    HandlerClientConnected?.Invoke(client);
+                    TcpClient oldClient;
+                    if (Connections.TryGetValue(id, out oldClient))
+                    {
+                        oldClient.GetStream().Close();
+                        oldClient.Close();
+                        oldClient.Dispose();
+                        HandlerClientDisConnected?.Invoke(id, oldClient);
+                    }
+                    HandlerClientConnected?.Invoke(id, client);
 
                     NetworkStream stream = client.GetStream();
                     int length = 1024 * 1024 * 4;
@@ -60,8 +69,9 @@ namespace LockStepServer
                         int recLength = await stream.ReadAsync(buff, 0, length);
                         byte[] recByte = new byte[recLength];
                         Array.Copy(buff, recByte, recLength);
+                        Packet packet = PacketParser.Parse(buff);
 
-                        HandlerReceiveMessage?.Invoke(id, Encoding.UTF8.GetString(recByte));
+                        HandlerReceiveMessage?.Invoke(id, (MsgType)packet.Opcode, Encoding.UTF8.GetString(packet.Bytes));
                     }
 
                 }, listener);
@@ -71,7 +81,7 @@ namespace LockStepServer
             }
         }
 
-        public override void SendTo(string id, string data)
+        public override void SendTo(string id, MsgType opcode, string data)
         {
             if (!Connections.ContainsKey(id))
             {
@@ -80,9 +90,10 @@ namespace LockStepServer
 
             TcpClient client = Connections.GetValueOrDefault(id);
             NetworkStream stream = client.GetStream();
+            stream.Write(BitConverter.GetBytes((ushort)opcode));
 
             byte[] buffer = Encoding.UTF8.GetBytes(data);
-            stream.Write(buffer, 0, buffer.Length);
+            stream.Write(buffer, 1, buffer.Length);
         }
 
         public override void StopSocket()
@@ -90,6 +101,7 @@ namespace LockStepServer
             listener.Stop();
             foreach (var item in Connections)
             {
+                item.Value.GetStream().Close();
                 item.Value.Close();
                 item.Value.Dispose();
             }
