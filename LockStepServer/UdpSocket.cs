@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using LockStepFrameWork.NetMsg;
 
 namespace LockStepServer
 {
@@ -29,21 +30,20 @@ namespace LockStepServer
 
         public void StartReceive()
         {
-            udpClient.BeginReceive(async asyncResult =>
+            udpClient.BeginReceive(asyncResult =>
             {
                 StartReceive();
 
                 IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, Port);
                 byte[] buffer = udpClient.EndReceive(asyncResult, ref endpoint);
-                string str = Encoding.UTF8.GetString(buffer);
 
                 string id = GenId(endpoint);
                 User2IpMap.Add(id, endpoint);
-                HandlerReceiveMessage(id, str);
+                HandlerReceiveMessage(id, buffer);
             }, udpClient);
         }
 
-        public override void SendTo(string id, string data)
+        public override void SendTo(string id, MsgType opcode, string data)
         {
             if (!User2IpMap.ContainsKey(id))
             {

@@ -20,9 +20,10 @@ namespace LockStepServer
             
         }
 
-        public Action<string, MsgType, string> HandlerReceiveMessage = (id, opcode, recByte) =>
+        public Action<string, byte[]> HandlerReceiveMessage = (id, recByte) =>
         {
-            Console.WriteLine("ReceiveMessage:{0}", recByte);
+            Packet packet = PacketParser.DeserializeFrom(recByte);
+            Console.WriteLine("ReceiveMessage:{0}", packet.msg.ToString());
         };
 
         public Action<string> HandlerTimeOut = (id) =>

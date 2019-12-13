@@ -69,9 +69,8 @@ namespace LockStepServer
                         int recLength = await stream.ReadAsync(buff, 0, length);
                         byte[] recByte = new byte[recLength];
                         Array.Copy(buff, recByte, recLength);
-                        Packet packet = PacketParser.Parse(buff);
 
-                        HandlerReceiveMessage?.Invoke(id, (MsgType)packet.Opcode, Encoding.UTF8.GetString(packet.Bytes));
+                        HandlerReceiveMessage?.Invoke(id, buff);
                     }
 
                 }, listener);
