@@ -49,7 +49,6 @@ namespace LockStepServer
                     TcpClient client = listener.EndAcceptTcpClient(asyncResult);
                     IPEndPoint endPoint = (IPEndPoint)client.Client.RemoteEndPoint;
                     string id = GenId(endPoint);
-                    Connections.Add(id, client);
                     TcpClient oldClient;
                     if (Connections.TryGetValue(id, out oldClient))
                     {
@@ -58,6 +57,7 @@ namespace LockStepServer
                         oldClient.Dispose();
                         HandlerClientDisConnected?.Invoke(id, oldClient);
                     }
+                    Connections.Add(id, client);
                     HandlerClientConnected?.Invoke(id, client);
 
                     NetworkStream stream = client.GetStream();
